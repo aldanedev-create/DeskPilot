@@ -1,2 +1,145 @@
 # DeskPilot
-a workstation app made with flaxon and teloce
+
+**Organize your files. Find what matters. Create clear step-by-step guides.**
+
+A local desktop workspace built with readable Python, Flaxon, Teloce components,
+and published MinifyJS **0.1.3**. No account or cloud upload is required.
+
+## First release
+
+- **Organize:** connect folders, preview extension-based sorting, refuse overwrites,
+  find exact duplicates, and undo completed moves without overwriting edited files.
+- **Library:** index existing files, search names/paths/tags, save tags and expiry dates.
+  Due-date reminders appear in the library when the app is open.
+- **Guides:** import screenshots, draw boxes/arrows/text, reorder steps, save guides,
+  and export paginated PDFs.
+- **Desktop:** folder selection, show a document in Explorer, and PDF save dialog.
+
+## Read the code
+
+| File | Responsibility |
+| --- | --- |
+| `deskpilot/storage.py` | SQLite schema and transaction helpers |
+| `deskpilot/files.py` | Folder boundaries, sorting, duplicates and undo |
+| `deskpilot/guides.py` | Screenshot validation, guide persistence and PDF export |
+| `deskpilot/app.py` | Flaxon API and session authorization |
+| `deskpilot/ui/app.html` | Teloce template, readable JavaScript and CSS |
+| `deskpilot/launcher.py` | Local server lifecycle and native desktop actions |
+| `packaging/build_msix.ps1` | Freeze Python and validate/package MSIX |
+
+Source code is formatted for people. Only generated production JavaScript is
+minified. Teloce compiles components; MinifyJS optimizes the result. Flaxon serves
+the local API and compiled interface. The desktop shell uses WebView2 on Windows.
+
+## Develop with editable Flaxon and Teloce
+
+Use Python 3.12. In PowerShell, from the DeskPilot project:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+
+git clone --branch fix/teloce-integration https://github.com/aldanedev-create/flaxon.git vendor/flaxon
+git clone https://github.com/aldanedev-create/teloce-py.git vendor/teloce
+
+python -m pip install minifyjs==0.1.3 pyyaml "tree-sitter>=0.25,<0.27" "tree-sitter-javascript>=0.23,<0.26" "tree-sitter-typescript>=0.23,<0.24" "uvicorn>=0.30,<1" "Pillow>=11,<13" "reportlab>=4,<5" "pywebview>=6,<7" "pytest>=8,<10"
+python -m pip install -e vendor/teloce -e vendor/flaxon -e . --no-deps
+python -m deskpilot.launcher --debug
+```
+
+Use Flaxon `main` after its integration fix is merged. Existing local checkouts
+can replace the two clones. Editable installation means edits to those checkouts
+are used directly. The explicit dependency installation and `--no-deps` support
+unreleased source checkouts whose version metadata may lag Flaxon's declared
+Teloce requirement; published packages must satisfy their normal constraints.
+
+Default launch is **production mode**, even from editable sources:
+
+```powershell
+python -m deskpilot.launcher
+```
+
+For a browser preview on any OS:
+
+```bash
+python -m deskpilot.launcher --browser --data-dir ./local-data
+```
+
+Stop the browser preview with Ctrl+C. Native dialogs/Explorer actions are only
+available in the desktop shell. Windows requires Microsoft Edge WebView2 Runtime.
+No Node installation is needed to run or compile the application.
+
+## Tests
+
+```bash
+python -m pytest -q
+```
+
+The default suite covers file operations, changed-file and collision protection,
+symlink rejection, SQLite persistence, PDF generation and production integration.
+A Chromium test is opt-in:
+
+```powershell
+python -m pip install playwright==1.58.0
+python -m playwright install chromium
+$env:DESKPILOT_BROWSER_TESTS = "1"
+python -m pytest tests/test_browser.py -q
+```
+
+## GitHub Actions and MSIX
+
+Create a repository and upload the contents of this project, including `.github`.
+Run **Test and build Windows MSIX**. The workflow uses editable framework
+checkouts and PyPI MinifyJS 0.1.3, runs tests/Chromium, and creates an artifact
+containing the executable directory, MSIX, and dependency version record.
+
+Set repository variables `MSIX_IDENTITY_NAME` and `MSIX_PUBLISHER` to the exact
+identity and publisher provided by your Microsoft Partner Center application.
+The default development identity is a placeholder, not a Store identity.
+
+The MSIX is **unsigned**. Microsoft Store signs accepted submissions. To install
+an MSIX directly for local testing, sign it with a certificate matching the
+manifest publisher and trust that certificate. Alternatively run the unpackaged
+`DeskPilot/DeskPilot.exe` artifact. No certificate or token is committed.
+
+The manifest declares `runFullTrust` because this app reads and moves user files.
+Review the capability and Store requirements before submission. A successful
+package build alone does not establish Store approval or correct installation.
+
+## Data and file behavior
+
+Windows data lives in `%LOCALAPPDATA%/DeskPilot`; `--data-dir` overrides it.
+Back up this whole folder for library metadata, screenshots and guides. Indexed
+original files remain in their own folders and must be backed up separately.
+The app binds only to loopback on a random port and requires a per-launch token
+for API operations. This is a single-user desktop app, not a public server.
+
+Sorting affects top-level files only and stays on the same filesystem. It uses
+hard links to reserve destinations without overwriting; filesystems that do not
+support hard links will reject sorting. Original content is not intentionally
+deleted: moving unlinks its old name after the new link exists. Duplicate
+results are advisory and never deleted automatically. Hidden files and symlinks
+are skipped; folders are limited to 5,000 indexed files.
+
+## Current limits
+
+This is a working first-release candidate, not a Store-certified release.
+Windows native UI, installed MSIX behavior and the added Chromium test must be
+validated on Windows before publishing. Local validation used editable Flaxon
+and updated Teloce source plus the published MinifyJS 0.1.3 wheel.
+
+Screenshot import and mouse annotation are implemented; OS screen capture,
+touch/pen annotations, OCR, background expiry notifications, encryption,
+automatic filesystem watching and cloud sync are not included. Re-index to see
+external changes. PDF text uses the standard Latin font; complex-script font
+support needs a separate addition. Guide images persist locally, including
+unused intermediate annotation images. Large folders may pause the UI while
+hashing. Do not organize a folder another program is actively modifying.
+
+Interrupted moves are journaled in SQLite. On restart, intact completed moves
+are recovered into history and can be undone, including a crash between creating
+the new hard link and removing the old one. Ambiguous changed files are retained
+for manual review; DeskPilot never guesses which copy to remove. The
+program refuses symlinks and verifies content but is not designed to defeat
+malicious concurrent filesystem changes by another local process.

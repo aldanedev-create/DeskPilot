@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.egg-info/
+vendor/
+local-data/
+build/
+dist/
+*.spec
+.flaxon/
