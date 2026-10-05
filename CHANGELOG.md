@@ -8,3 +8,5 @@
 - Added Flaxon/Teloce production integration with PyPI MinifyJS 0.1.3.
 - Added Windows desktop launcher and GitHub Actions MSIX workflow.
 - Added file-operation, persistence and production integration tests, plus opt-in Chromium checks.
+
+- Split the UI into workspace components with scoped styles, retaining unsaved guide state between tabs.

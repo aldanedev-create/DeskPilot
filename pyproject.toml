@@ -18,7 +18,7 @@ build = ["pyinstaller>=6,<7"]
 deskpilot = "deskpilot.launcher:main"
 
 [tool.setuptools.package-data]
-deskpilot = ["ui/*.html"]
+deskpilot = ["ui/*.html", "ui/components/*.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

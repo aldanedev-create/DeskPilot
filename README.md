@@ -23,7 +23,8 @@ and published MinifyJS **0.1.3**. No account or cloud upload is required.
 | `deskpilot/files.py` | Folder boundaries, sorting, duplicates and undo |
 | `deskpilot/guides.py` | Screenshot validation, guide persistence and PDF export |
 | `deskpilot/app.py` | Flaxon API and session authorization |
-| `deskpilot/ui/app.html` | Teloce template, readable JavaScript and CSS |
+| `deskpilot/ui/app.html` | Application shell and workspace navigation |
+| `deskpilot/ui/components/` | Organize, library and guide components with scoped styles |
 | `deskpilot/launcher.py` | Local server lifecycle and native desktop actions |
 | `packaging/build_msix.ps1` | Freeze Python and validate/package MSIX |
 
