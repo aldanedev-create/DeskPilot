@@ -53,8 +53,8 @@ jobs:
         run: |
           $identity = '${{ vars.MSIX_IDENTITY_NAME }}'
           $publisher = '${{ vars.MSIX_PUBLISHER }}'
-          if (-not $identity) { $identity = 'DeskPilot.LocalWorkspace' }
-          if (-not $publisher) { $publisher = 'CN=DeskPilotDevelopment' }
+          if (-not $identity) { $identity = 'HappyRecorder3D.DeskHELP' }
+          if (-not $publisher) { $publisher = 'CN=50CA2AC2-0155-44AC-B2B0-47100A3FB6E2' }
           ./packaging/build_msix.ps1 -IdentityName $identity -Publisher $publisher
       - uses: actions/upload-artifact@v4
         with:

@@ -97,7 +97,7 @@ containing the executable directory, MSIX, and dependency version record.
 
 Set repository variables `MSIX_IDENTITY_NAME` and `MSIX_PUBLISHER` to the exact
 identity and publisher provided by your Microsoft Partner Center application.
-The default development identity is a placeholder, not a Store identity.
+The defaults now use the supplied DeskHELP Store identity: `HappyRecorder3D.DeskHELP`, publisher `CN=50CA2AC2-0155-44AC-B2B0-47100A3FB6E2`, and publisher display name `Happy Recorder 3D`. Repository variables can override the first two values.
 
 The MSIX is **unsigned**. Microsoft Store signs accepted submissions. To install
 an MSIX directly for local testing, sign it with a certificate matching the
@@ -144,3 +144,11 @@ the new hard link and removing the old one. Ambiguous changed files are retained
 for manual review; DeskPilot never guesses which copy to remove. The
 program refuses symlinks and verifies content but is not designed to defeat
 malicious concurrent filesystem changes by another local process.
+
+## MinifyJS measurement
+
+With identical production settings and asset hashing disabled for comparison,
+the nine emitted JavaScript files totaled **151,008 B** with minification off
+and **114,330 B** with MinifyJS enabled: **24.29% smaller**. Summed per-file gzip
+size fell from **35,875 B** to **29,599 B** (**17.49%**). This measures emitted
+JavaScript, not the whole MSIX or embedded Python/native dependencies.

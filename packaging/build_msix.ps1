@@ -1,6 +1,6 @@
 param(
-    [string]$IdentityName = "DeskPilot.LocalWorkspace",
-    [string]$Publisher = "CN=DeskPilotDevelopment",
+    [string]$IdentityName = "HappyRecorder3D.DeskHELP",
+    [string]$Publisher = "CN=50CA2AC2-0155-44AC-B2B0-47100A3FB6E2",
     [string]$Version = "0.1.0.0"
 )
 $ErrorActionPreference = "Stop"
