@@ -17,6 +17,9 @@ build = ["pyinstaller>=6,<7"]
 [project.scripts]
 deskpilot = "deskpilot.launcher:main"
 
+[tool.setuptools]
+packages = ["deskpilot"]
+
 [tool.setuptools.package-data]
 deskpilot = ["ui/*.html", "ui/components/*.html"]
 
