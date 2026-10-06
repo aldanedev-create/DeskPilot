@@ -10,3 +10,5 @@
 - Added file-operation, persistence and production integration tests, plus opt-in Chromium checks.
 
 - Split the UI into workspace components with scoped styles, retaining unsaved guide state between tabs.
+
+- Enabled MinifyJS optimized production bundling, hashed entry and tree shaking; development stays unbundled.

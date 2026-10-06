@@ -152,3 +152,25 @@ the nine emitted JavaScript files totaled **151,008 B** with minification off
 and **114,330 B** with MinifyJS enabled: **24.29% smaller**. Summed per-file gzip
 size fell from **35,875 B** to **29,599 B** (**17.49%**). This measures emitted
 JavaScript, not the whole MSIX or embedded Python/native dependencies.
+
+## Optimized production bundle
+
+Production uses MinifyJS 0.1.3 bundling, tree shaking, compression, identifier
+mangling and hashed entry naming. Flaxon imports the stable `ui/app.js` shim,
+which re-exports the hashed bundle. Development remains unbundled and readable.
+Code splitting is enabled, but the current static component imports emit one
+bundle; this does not make components lazy-loaded automatically.
+
+Comparable local JS measurements (hashing disabled for comparison):
+
+| Mode | JS artifacts measured | JavaScript | Summed gzip |
+| --- | ---: | ---: | ---: |
+| Unminified generated modules | 9 | 151,008 B | 35,875 B |
+| Minified separate modules | 9 | 114,330 B | 29,599 B |
+| Optimized bundle | 1 | 76,290 B | 19,273 B |
+
+The bundle is **49.48% smaller** than unminified modules and **33.27% smaller**
+than the previous minified modules. Measurements exclude the small entry shim,
+CSS and backend/native files. Teloce retains intermediate modules on disk; these
+figures describe the bundle used by the browser, not the whole build directory
+or MSIX package. Gzip is a comparison metric, not local transport compression.

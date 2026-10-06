@@ -31,6 +31,12 @@ def create_app(data_directory: Path, *, debug=False):
             "source_maps": debug,
             "spa": False,
             "minifier": "teloce" if debug else "minifyjs",
+            "bundle": not debug,
+            "bundler": "minifyjs",
+            "bundle_entry": "ui/app.js",
+            "bundle_output": str(runtime / ".flaxon/build/ui/deskhelp.js"),
+            "tree_shake": True,
+            "code_splitting": True,
         },
     )
     app.workspace, app.guides, app.store = workspace, guides, store

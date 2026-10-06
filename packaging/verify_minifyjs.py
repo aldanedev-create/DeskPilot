@@ -17,6 +17,9 @@ with TemporaryDirectory() as directory:
     app = create_app(Path(directory) / "data", debug=False)
     build = app.teloce.build()
     assert not build["failed"], build["errors"]
+    assert build["bundler"] == "minifyjs"
+    assert build["bundle_outputs"]
+    assert (app.teloce.build_dir / build["bundle"]).is_file()
     assert build["minifier"] == "minifyjs", "Production must use MinifyJS"
     assert build["minifyjs_version"] == "0.1.3"
     assert (app.teloce.build_dir / "ui/app.js").is_file()

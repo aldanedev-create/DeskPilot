@@ -37,6 +37,15 @@ def test_production_workspace_interactions(tmp_path):
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch()
             page = browser.new_page()
+            javascript_requests = []
+            page.on(
+                "request",
+                lambda request: (
+                    javascript_requests.append(request.url)
+                    if request.url.split("?")[0].endswith(".js")
+                    else None
+                ),
+            )
             errors = []
             page.on("pageerror", lambda error: errors.append(str(error)))
             page.goto(f"http://127.0.0.1:{listener.getsockname()[1]}/")
@@ -72,6 +81,9 @@ def test_production_workspace_interactions(tmp_path):
             page.reload()
             page.get_by_role("button", name="Screenshot guides").click()
             page.get_by_role("button", name="My first guide").wait_for()
+            assert app.teloce.build_result["bundler"] == "minifyjs"
+            assert any("deskhelp-" in url for url in javascript_requests)
+            assert not any("/components/" in url for url in javascript_requests)
             assert not errors, errors
             browser.close()
     finally:
