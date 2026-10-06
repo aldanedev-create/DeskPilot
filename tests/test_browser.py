@@ -81,6 +81,7 @@ def test_production_workspace_interactions(tmp_path):
             )
 
             def draw(x1, y1, x2, y2):
+                canvas.scroll_into_view_if_needed()
                 bounds = canvas.bounding_box()
                 width = canvas.evaluate("node => node.width")
                 height = canvas.evaluate("node => node.height")
