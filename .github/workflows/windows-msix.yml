@@ -57,6 +57,12 @@ jobs:
           if (-not $publisher) { $publisher = 'CN=50CA2AC2-0155-44AC-B2B0-47100A3FB6E2' }
           ./packaging/build_msix.ps1 -IdentityName $identity -Publisher $publisher
       - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: DeskHELP-startup-diagnostics
+          path: build/native-smoke.json
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
         with:
           name: DeskPilot-Windows-x64
           path: |

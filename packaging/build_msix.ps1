@@ -12,6 +12,18 @@ python -m PyInstaller --clean --noconfirm --noconsole --onedir --name DeskPilot 
     --collect-all tree_sitter_typescript --collect-all PIL --collect-all reportlab `
     --add-data "deskpilot/ui;deskpilot/ui" run_desktop.py
 if ($LASTEXITCODE -ne 0) { throw "Executable build failed" }
+# Test the frozen WinForms/WebView2 shell, not just source code in Chromium.
+$result = Join-Path (Get-Location) "build/native-smoke.json"
+if (Test-Path $result) { Remove-Item $result -Force }
+$testData = Join-Path (Get-Location) "build/native-smoke-data"
+$process = Start-Process -FilePath "dist/DeskPilot/DeskPilot.exe" -ArgumentList @("--smoke-result", "`"$result`"", "--data-dir", "`"$testData`"") -PassThru
+if (-not $process.WaitForExit(90000)) {
+    Stop-Process -Id $process.Id -Force
+    throw "Frozen desktop startup timed out"
+}
+if (-not (Test-Path $result)) { throw "Frozen desktop did not produce a startup result" }
+$check = Get-Content $result -Raw | ConvertFrom-Json
+if ($process.ExitCode -ne 0 -or -not $check.ok) { throw "Frozen desktop startup failed: $($check.error)" }
 $stage = "build/msix-stage"
 if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
 New-Item -ItemType Directory -Force $stage | Out-Null

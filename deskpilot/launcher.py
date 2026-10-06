@@ -1,6 +1,7 @@
 """Launch one local Flaxon server, then open the Windows WebView2 shell."""
 
 import argparse
+import json
 import os
 import shutil
 import socket
@@ -54,7 +55,7 @@ class DesktopActions:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="DeskPilot local desktop workspace")
+    parser = argparse.ArgumentParser(description="DeskHELP local desktop workspace")
     parser.add_argument(
         "--browser",
         action="store_true",
@@ -64,6 +65,9 @@ def main():
         "--debug", action="store_true", help="Readable frontend output and source maps"
     )
     parser.add_argument("--data-dir", type=Path)
+    parser.add_argument(
+        "--smoke-result", type=Path, help="Test native startup and write a JSON result"
+    )
     arguments = parser.parse_args()
     data = (
         arguments.data_dir
@@ -88,14 +92,14 @@ def main():
         deadline = time.monotonic() + 20
         while not server.started:
             if not thread.is_alive() or time.monotonic() > deadline:
-                raise RuntimeError("DeskPilot could not start its local backend")
+                raise RuntimeError("DeskHELP could not start its local backend")
             time.sleep(0.05)
         url = f"http://127.0.0.1:{port}/"
         if arguments.browser:
             import webbrowser
 
             webbrowser.open(url)
-            print(f"DeskPilot is running at {url}. Press Ctrl+C to stop.")
+            print(f"DeskHELP is running at {url}. Press Ctrl+C to stop.")
             while thread.is_alive():
                 time.sleep(0.5)
         else:
@@ -103,18 +107,57 @@ def main():
 
             actions = DesktopActions(app)
             actions.window = webview.create_window(
-                "DeskPilot",
+                "DeskHELP",
                 url,
                 js_api=actions,
                 width=1280,
                 height=880,
                 min_size=(800, 600),
             )
+            smoke = {
+                "ok": False,
+                "error": "Window closed before the interface was ready",
+            }
+
+            def check_native_window():
+                try:
+                    if not actions.window.events.loaded.wait(timeout=30):
+                        raise RuntimeError("WebView2 page did not load")
+                    deadline = time.monotonic() + 20
+                    while time.monotonic() < deadline:
+                        ready = actions.window.evaluate_js(
+                            "Boolean(document.querySelector('h1') && document.querySelector('.ocean') && document.body.innerText.includes('DeskHELP') && !document.body.innerText.includes('{{'))"
+                        )
+                        if ready:
+                            smoke.update(ok=True, error=None)
+                            break
+                        time.sleep(0.2)
+                    if not smoke["ok"]:
+                        raise RuntimeError("DeskHELP interface did not mount")
+                except Exception as error:
+                    smoke.update(ok=False, error=str(error))
+                finally:
+                    arguments.smoke_result.parent.mkdir(parents=True, exist_ok=True)
+                    arguments.smoke_result.write_text(
+                        json.dumps(smoke), encoding="utf-8"
+                    )
+                    actions.window.destroy()
+
             webview.start(
+                func=check_native_window if arguments.smoke_result else None,
                 gui="edgechromium" if os.name == "nt" else None,
                 debug=arguments.debug,
                 storage_path=str(data / "webview"),
             )
+            if arguments.smoke_result and not smoke["ok"]:
+                raise RuntimeError(smoke["error"])
+    except Exception as error:
+        if arguments.smoke_result:
+            arguments.smoke_result.parent.mkdir(parents=True, exist_ok=True)
+            arguments.smoke_result.write_text(
+                json.dumps({"ok": False, "error": str(error)}), encoding="utf-8"
+            )
+        raise
     except KeyboardInterrupt:
         pass
     finally:

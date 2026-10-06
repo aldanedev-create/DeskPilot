@@ -19,14 +19,14 @@ def create_app(data_directory: Path, *, debug=False):
     workspace = FileWorkspace(store)
     guides = Guides(store)
     token = secrets.token_urlsafe(32)
-    app = Flaxon("DeskPilot", debug=debug)
+    app = Flaxon("DeskHELP", debug=debug)
     # Installed package files may be read-only under MSIX. Build in a temporary tree.
     runtime = Path(tempfile.mkdtemp(prefix="deskpilot-ui-"))
     shutil.copytree(Path(__file__).parent / "ui", runtime / "ui")
     app.use_teloce(
         project_root=runtime,
         ui_dir="ui",
-        title="DeskPilot",
+        title="DeskHELP",
         options={
             "source_maps": debug,
             "spa": False,
@@ -49,7 +49,7 @@ def create_app(data_directory: Path, *, debug=False):
         if not secrets.compare_digest(
             request.headers.get("x-deskpilot-token", ""), token
         ):
-            raise ValueError("Invalid local session; reopen DeskPilot")
+            raise ValueError("Invalid local session; reopen DeskHELP")
 
     def endpoint(function):
         async def handler(request: Request):

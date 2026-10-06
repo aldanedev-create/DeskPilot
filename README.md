@@ -1,4 +1,4 @@
-# DeskPilot
+# DeskHELP
 
 **Organize your files. Find what matters. Create clear step-by-step guides.**
 
@@ -174,3 +174,15 @@ than the previous minified modules. Measurements exclude the small entry shim,
 CSS and backend/native files. Teloce retains intermediate modules on disk; these
 figures describe the bundle used by the browser, not the whole build directory
 or MSIX package. Gzip is a comparison metric, not local transport compression.
+
+## Store preparation
+
+The user-facing name is DeskHELP; the repository, Python module and existing
+data directory remain `DeskPilot` for compatibility. Read [Store submission](STORE_SUBMISSION.md)
+and [Privacy](PRIVACY.md). The ocean loops while the app is open, pauses when
+the page is hidden and respects reduced motion. It is decorative, not a service
+running when the app is closed.
+
+If the downloaded Windows ZIP reports a Python.Runtime loader error, unblock
+the trusted GitHub ZIP in Properties before extracting it into a new folder.
+Do not disable Windows security.

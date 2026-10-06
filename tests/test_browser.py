@@ -81,6 +81,19 @@ def test_production_workspace_interactions(tmp_path):
             page.reload()
             page.get_by_role("button", name="Screenshot guides").click()
             page.get_by_role("button", name="My first guide").wait_for()
+            page.get_by_role("button", name="Tutorial & privacy").click()
+            page.get_by_role("heading", name="Your data and privacy").wait_for()
+            page.get_by_role("button", name="Pause ocean").click()
+            assert page.locator(".ocean.paused").count() == 1
+            page.get_by_role("button", name="Resume ocean").click()
+            page.emulate_media(reduced_motion="reduce")
+            assert (
+                page.locator(".swimmer").first.evaluate(
+                    "node => getComputedStyle(node).animationName"
+                )
+                == "none"
+            )
+            assert page.title() == "DeskHELP"
             assert app.teloce.build_result["bundler"] == "minifyjs"
             assert any("deskhelp-" in url for url in javascript_requests)
             assert not any("/components/" in url for url in javascript_requests)

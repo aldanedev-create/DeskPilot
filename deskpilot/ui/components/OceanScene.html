@@ -1,0 +1,262 @@
+<template>
+  <section class="ocean-card" aria-label="Animated ocean">
+    <div :class="paused ? 'ocean paused' : 'ocean'" aria-hidden="true">
+      <div class="sunlight"></div>
+      <div class="wave"></div>
+      <div class="wave second"></div>
+      <div class="swimmer one"><span class="fish"></span></div>
+      <div class="swimmer two"><span class="fish coral"></span></div>
+      <div class="swimmer three"><span class="fish gold"></span></div>
+      <div class="swimmer four"><span class="fish small"></span></div>
+      <div class="bubbles"></div>
+      <div class="kelp left"></div>
+      <div class="kelp middle"></div>
+      <div class="kelp right"></div>
+      <div class="seabed"></div>
+    </div>
+    <div class="caption">
+      <span>A little ocean. A little breathing room.</span
+      ><button @click="toggleOcean()" :aria-pressed="paused">
+        {{ paused ? 'Resume ocean' : 'Pause ocean' }}
+      </button>
+    </div>
+  </section>
+</template>
+<script>
+  export default {
+    data() {
+      return { paused: false };
+    },
+    methods: {
+      toggleOcean() {
+        this.paused = !this.paused;
+      },
+    },
+  };
+</script>
+<style scoped>
+  .ocean-card {
+    border-radius: 18px;
+    overflow: hidden;
+    margin-bottom: 26px;
+    background: #05344b;
+    color: #edf9fc;
+  }
+  .ocean {
+    height: 160px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(170deg, #39aabb, #086180 50%, #042d4a);
+  }
+  .sunlight {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      110deg,
+      transparent 20%,
+      #e4ffff24 21%,
+      transparent 29%,
+      #e4ffff15 40%,
+      transparent 48%
+    );
+  }
+  .wave {
+    position: absolute;
+    top: -45px;
+    left: -10%;
+    width: 120%;
+    height: 65px;
+    border-radius: 45%;
+    background: #9ff0eb55;
+    animation: waves 9s ease-in-out infinite alternate;
+  }
+  .second {
+    top: -40px;
+    animation-delay: -5s;
+    opacity: 0.5;
+  }
+  .swimmer {
+    position: absolute;
+    left: -70px;
+    top: 46px;
+    animation: swim 24s linear infinite;
+  }
+  .two {
+    top: 88px;
+    animation-duration: 31s;
+    animation-delay: -16s;
+  }
+  .three {
+    top: 64px;
+    animation-duration: 20s;
+    animation-delay: -9s;
+  }
+  .four {
+    top: 113px;
+    animation-duration: 27s;
+    animation-delay: -21s;
+  }
+  .fish {
+    display: block;
+    position: relative;
+    width: 42px;
+    height: 21px;
+    border-radius: 60% 45% 45% 60%;
+    background: #92e2e0;
+    box-shadow: inset 0 -5px #087e8c55;
+    animation: bob 3s ease-in-out infinite alternate;
+  }
+  .fish::before {
+    content: "";
+    position: absolute;
+    left: -14px;
+    top: 2px;
+    border-left: 17px solid #92e2e0;
+    border-top: 9px solid transparent;
+    border-bottom: 9px solid transparent;
+  }
+  .fish::after {
+    content: "";
+    position: absolute;
+    right: 8px;
+    top: 6px;
+    width: 3px;
+    height: 3px;
+    background: #07344b;
+    border-radius: 50%;
+  }
+  .coral {
+    background: #ff9e8b;
+  }
+  .coral::before {
+    border-left-color: #ff9e8b;
+  }
+  .gold {
+    background: #ffd480;
+  }
+  .gold::before {
+    border-left-color: #ffd480;
+  }
+  .small {
+    transform: scale(0.65);
+  }
+  .bubbles {
+    position: absolute;
+    left: 72%;
+    bottom: -40px;
+    width: 6px;
+    height: 6px;
+    border: 1px solid #bcf7ff88;
+    border-radius: 50%;
+    box-shadow:
+      20px 36px #bcf7ff55,
+      -12px 70px #bcf7ff55,
+      36px 100px #bcf7ff55;
+    animation: rise 12s linear infinite;
+  }
+  .kelp {
+    position: absolute;
+    bottom: 0;
+    width: 14px;
+    height: 64px;
+    background: #38a89c;
+    border-radius: 100% 0;
+    transform-origin: bottom;
+    animation: sway 5s ease-in-out infinite alternate;
+  }
+  .left {
+    left: 6%;
+  }
+  .middle {
+    left: 11%;
+    height: 45px;
+    animation-delay: -2s;
+  }
+  .right {
+    right: 9%;
+    height: 53px;
+    animation-delay: -3s;
+  }
+  .seabed {
+    position: absolute;
+    bottom: -14px;
+    width: 110%;
+    left: -5%;
+    height: 30px;
+    border-radius: 50%;
+    background: #113d50;
+  }
+  .caption {
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 18px;
+    font-size: 12px;
+  }
+  button {
+    border: 1px solid #ffffff55;
+    border-radius: 8px;
+    color: white;
+    background: transparent;
+    padding: 7px 12px;
+    cursor: pointer;
+    font: inherit;
+  }
+  .paused *,
+  :global(.ocean-hidden) .ocean * {
+    animation-play-state: paused !important;
+  }
+  @keyframes swim {
+    from {
+      left: -70px;
+    }
+    to {
+      left: 110%;
+    }
+  }
+  @keyframes bob {
+    from {
+      margin-top: -3px;
+    }
+    to {
+      margin-top: 3px;
+    }
+  }
+  @keyframes waves {
+    to {
+      transform: translateX(3%) rotate(2deg);
+    }
+  }
+  @keyframes rise {
+    to {
+      transform: translateY(-250px);
+      opacity: 0;
+    }
+  }
+  @keyframes sway {
+    from {
+      transform: rotate(-8deg);
+    }
+    to {
+      transform: rotate(9deg);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ocean * {
+      animation: none !important;
+    }
+    .swimmer {
+      left: 24%;
+    }
+    .two {
+      left: 56%;
+    }
+    .three {
+      left: 78%;
+    }
+    .four {
+      left: 40%;
+    }
+  }
+</style>

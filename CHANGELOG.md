@@ -12,3 +12,12 @@
 - Split the UI into workspace components with scoped styles, retaining unsaved guide state between tabs.
 
 - Enabled MinifyJS optimized production bundling, hashed entry and tree shaking; development stays unbundled.
+
+## Unreleased — DeskHELP Store preparation
+
+- Match window, page and interface branding to reserved DeskHELP name.
+- Add a short tutorial, local data/privacy information and support links.
+- Add a continuous ocean scene with fish, kelp, waves and bubbles; pause,
+  reduced-motion and hidden-page suspension keep it controllable.
+- Gate MSIX packaging on frozen WinForms/WebView2 startup and UI mount.
+- Add privacy policy, listing draft and certification instructions.

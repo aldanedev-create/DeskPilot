@@ -1,0 +1,120 @@
+<template>
+  <section class="tutorial" aria-label="DeskHELP tutorial and privacy">
+    <h2>Three useful things, one local workspace</h2>
+    <ol>
+      <li>
+        <h3>Organize with a preview</h3>
+        <p>
+          Connect a folder you own. Choose Preview sorting, review the proposed
+          moves, then select Move these files. Sorting groups top-level files by
+          type. Undo moves restores unchanged files; it never overwrites a
+          changed file. Try a small test folder first.
+        </p>
+      </li>
+      <li>
+        <h3>Find important documents</h3>
+        <p>
+          Open Document library. Search file names, paths or tags. Save tags and
+          an expiry date. Reminders appear here while DeskHELP is open. Re-index
+          your connected folder after changing files outside the app.
+        </p>
+      </li>
+      <li>
+        <h3>Make a screenshot guide</h3>
+        <p>
+          Import PNG, JPG or WebP screenshots. Add step titles and notes, draw
+          annotations and choose Keep annotations. Arrange your steps, save the
+          guide, then export a PDF. DeskHELP imports screenshots; it does not
+          capture your screen.
+        </p>
+      </li>
+    </ol>
+    <h2>Know your limits</h2>
+    <p>
+      Duplicate detection reports identical content; it does not delete files.
+      Sorting needs a filesystem supporting hard links and refuses overwrites.
+      Indexing is limited to 5,000 files per folder. Use backups and avoid
+      folders being changed by another program. PDF text currently supports
+      standard Latin characters.
+    </p>
+    <h2>Your data and privacy</h2>
+    <p>
+      No account, ads, analytics or cloud upload. DeskHELP reads folders you
+      connect, stores file names, paths, tags, expiry dates, move history,
+      imported screenshots and guides locally. Duplicate detection reads file
+      contents to compare hashes.
+    </p>
+    <p>
+      Metadata and guide images are stored in %LOCALAPPDATA%/DeskPilot (Windows
+      may redirect this for an installed MSIX). Original documents remain in
+      their own folders. The database is not encrypted. Keep your Windows
+      account secure and back up originals separately.
+    </p>
+    <p>
+      Exported PDFs go to the location you choose. DeskHELP does not share them
+      automatically. To erase local app records, close DeskHELP and remove its
+      data folder after backing it up. This removes undo history; it does not
+      reverse completed moves or delete your original documents. Uninstall
+      through Windows Settings → Apps.
+    </p>
+    <p>
+      The ocean is a decorative looping animation while the app is open. Pause
+      it with its button. Windows reduced-motion settings stop its movement. It
+      does not run after DeskHELP closes.
+    </p>
+    <p>
+      <a
+        href="https://github.com/aldanedev-create/DeskPilot/blob/main/PRIVACY.md"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Full privacy policy</a
+      >
+      ·
+      <a
+        href="https://github.com/aldanedev-create/DeskPilot/issues"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Support</a
+      >
+    </p>
+  </section>
+</template>
+<script>
+  export default {};
+</script>
+<style scoped>
+  .tutorial {
+    background: white;
+    border: 1px solid #dde3d8;
+    padding: 28px;
+    border-radius: 16px;
+    max-width: 900px;
+  }
+  h2 {
+    color: #244f3d;
+    font-size: 20px;
+    margin: 26px 0 12px;
+  }
+  h2:first-child {
+    margin-top: 0;
+  }
+  h3 {
+    font-size: 16px;
+    color: #263331;
+  }
+  p {
+    line-height: 1.75;
+    color: #465649;
+    font-size: 14px;
+  }
+  li {
+    padding-left: 8px;
+    margin-bottom: 20px;
+  }
+  a {
+    color: #006480;
+  }
+  ol {
+    padding-left: 22px;
+  }
+</style>

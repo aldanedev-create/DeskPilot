@@ -3,7 +3,7 @@
     <aside class="sidebar">
       <div class="brand">
         <span class="mark">D</span>
-        <div>DeskPilot<small>Your local workspace</small></div>
+        <div>DeskHELP<small>Your local workspace</small></div>
       </div>
       <nav aria-label="Workspaces">
         <button
@@ -24,6 +24,12 @@
         >
           ▧ <span>Screenshot guides</span>
         </button>
+        <button
+          :class="tab === 'tutorial' ? 'nav active' : 'nav'"
+          @click="selectTab('tutorial')"
+        >
+          ? <span>Tutorial &amp; privacy</span>
+        </button>
       </nav>
       <div class="privacy">
         <span class="dot"></span> Local by design
@@ -38,10 +44,12 @@
         <h1>{{ pageTitle() }}</h1>
         <p>{{ pageDescription() }}</p>
       </header>
+      <OceanScene />
+      <TutorialPage v-if="tab === 'tutorial'" />
       <OrganizeWorkspace v-if="tab === 'organize'" :token="token" />
       <DocumentLibrary v-if="tab === 'library'" :token="token" />
       <ScreenshotGuides v-show="tab === 'guides'" :token="token" />
-      <footer>DeskPilot 0.1 · Local files, thoughtful tools.</footer>
+      <footer>DeskHELP 0.1 · Local files, thoughtful tools.</footer>
     </main>
   </div>
 </template>
@@ -49,15 +57,32 @@
   import OrganizeWorkspace from "./components/OrganizeWorkspace.html";
   import DocumentLibrary from "./components/DocumentLibrary.html";
   import ScreenshotGuides from "./components/ScreenshotGuides.html";
+  import OceanScene from "./components/OceanScene.html";
+  import TutorialPage from "./components/TutorialPage.html";
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", () => {
+      document.documentElement.classList.toggle(
+        "ocean-hidden",
+        document.hidden,
+      );
+    });
+  }
   export default {
     props: ["token"],
-    components: { OrganizeWorkspace, DocumentLibrary, ScreenshotGuides },
+    components: {
+      OrganizeWorkspace,
+      DocumentLibrary,
+      ScreenshotGuides,
+      OceanScene,
+      TutorialPage,
+    },
     data() {
       return { tab: "organize" };
     },
     methods: {
       pageTitle() {
         return {
+          tutorial: "A helpful start.",
           organize: "Make room for what matters.",
           library: "Everything important. Easy to find.",
           guides: "Show the steps. Share the know-how.",
@@ -65,6 +90,8 @@
       },
       pageDescription() {
         return {
+          tutorial:
+            "Learn the tools, understand your data, and take things at your own pace.",
           organize: "Bring a little order to your everyday files.",
           library:
             "Find documents, add context, and keep important dates in view.",
@@ -84,6 +111,12 @@
     background: #f6f7f3;
     color: #263331;
     font-family: "Segoe UI", system-ui, sans-serif;
+  }
+  :global(button:focus-visible),
+  :global(a:focus-visible),
+  :global(input:focus-visible) {
+    outline: 3px solid #006c94;
+    outline-offset: 3px;
   }
   :global(*) {
     box-sizing: border-box;
