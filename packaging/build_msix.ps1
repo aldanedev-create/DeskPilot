@@ -20,7 +20,11 @@ $testData = Join-Path (Get-Location) "build/native-smoke-data"
 $process = Start-Process -FilePath "dist/DeskPilot/DeskPilot.exe" -ArgumentList @("--smoke-result", "`"$result`"", "--data-dir", "`"$testData`"") -PassThru
 if (-not $process.WaitForExit(90000)) {
     Stop-Process -Id $process.Id -Force
-    throw "Frozen desktop startup timed out"
+    if (Test-Path $result) {
+        $diagnostic = Get-Content $result -Raw
+        throw "Frozen desktop startup timed out: $diagnostic"
+    }
+    throw "Frozen desktop startup timed out without a result"
 }
 if (-not (Test-Path $result)) { throw "Frozen desktop did not produce a startup result" }
 $check = Get-Content $result -Raw | ConvertFrom-Json

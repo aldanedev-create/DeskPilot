@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import logging
 import os
 import shutil
 import socket
@@ -114,6 +115,13 @@ def main():
         or Path(os.environ.get("LOCALAPPDATA", Path.home() / ".local/share"))
         / "DeskPilot"
     )
+    data.mkdir(parents=True, exist_ok=True)
+    logging.basicConfig(
+        filename=data / "startup.log",
+        level=logging.WARNING,
+        encoding="utf-8",
+        force=True,
+    )
     app = create_app(data, debug=arguments.debug)
     import uvicorn
 
@@ -143,6 +151,14 @@ def main():
             while thread.is_alive():
                 time.sleep(0.5)
         else:
+            # Compile and verify the local page before loading the native browser.
+            # This also makes backend failures visible rather than leaving a blank window.
+            from urllib.request import urlopen
+
+            with urlopen(url, timeout=30) as response:
+                page_html = response.read().decode("utf-8")
+                if "DeskHELP" not in page_html:
+                    raise RuntimeError("Local interface response is invalid")
             import webview
 
             actions = DesktopActions(app)
@@ -162,7 +178,9 @@ def main():
             def check_native_window():
                 try:
                     if not actions.window.events.loaded.wait(timeout=30):
-                        raise RuntimeError("WebView2 page did not load")
+                        raise RuntimeError(
+                            "WebView2 page did not load; local HTTP page was verified"
+                        )
                     deadline = time.monotonic() + 20
                     while time.monotonic() < deadline:
                         ready = actions.window.evaluate_js(

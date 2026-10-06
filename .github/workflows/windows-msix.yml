@@ -60,7 +60,9 @@ jobs:
         if: always()
         with:
           name: DeskHELP-startup-diagnostics
-          path: build/native-smoke.json
+          path: |
+            build/native-smoke.json
+            build/native-smoke-data/startup.log
           if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         with:
