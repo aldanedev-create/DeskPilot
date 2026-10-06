@@ -36,6 +36,46 @@ class DesktopActions:
             subprocess.Popen(["explorer.exe", "/select,", str(path)])
         return str(path)
 
+    def open_document(self, identifier):
+        rows = self.app.store.rows(
+            "SELECT path,root_id FROM documents WHERE id=?", (int(identifier),)
+        )
+        if not rows:
+            raise ValueError("Document not found")
+        root = self.app.workspace.root(rows[0]["root_id"])
+        path = self.app.workspace.safe_file(Path(rows[0]["path"]), root)
+        if path.suffix.lower() not in {
+            ".pdf",
+            ".txt",
+            ".md",
+            ".docx",
+            ".xlsx",
+            ".csv",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".webp",
+        }:
+            raise ValueError("Use Show in folder to open this file type")
+        if os.name == "nt":
+            os.startfile(str(path))
+        return str(path)
+
+    def export_image(self, identifier):
+        import webview
+
+        source = self.app.guides.image_path(str(identifier))
+        selected = self.window.create_file_dialog(
+            webview.FileDialog.SAVE,
+            save_filename="screenshot.png",
+            file_types=("PNG images (*.png)",),
+        )
+        if not selected:
+            return None
+        destination = Path(selected[0]).with_suffix(".png")
+        shutil.copyfile(source, destination)
+        return f"Exported to {destination}"
+
     def export_guide(self, identifier):
         import webview
 
@@ -134,7 +174,7 @@ def main():
                         time.sleep(0.2)
                     if not smoke["ok"]:
                         raise RuntimeError("DeskHELP interface did not mount")
-                except Exception as error:
+                except Exception as error:  # noqa: BLE001 - record native startup failures for CI
                     smoke.update(ok=False, error=str(error))
                 finally:
                     arguments.smoke_result.parent.mkdir(parents=True, exist_ok=True)

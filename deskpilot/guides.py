@@ -5,7 +5,7 @@ import json
 import uuid
 from io import BytesIO
 
-from PIL import Image
+from PIL import Image, ImageOps
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 
@@ -19,16 +19,20 @@ class Guides:
         self.exports.mkdir(exist_ok=True)
 
     def import_image(self, data_url):
-        if not isinstance(data_url, str) or len(data_url) > 12_000_000:
-            raise ValueError("Choose a screenshot smaller than 8 MB")
+        if not isinstance(data_url, str) or len(data_url) > 24_000_000:
+            raise ValueError("Image data exceeds the 18 MB storage limit")
         try:
             data = base64.b64decode(data_url.split(",", 1)[1], validate=True)
             with Image.open(BytesIO(data)) as image:
+                if image.format not in {"PNG", "JPEG", "WEBP"}:
+                    raise ValueError("Unsupported screenshot format")
                 if image.width * image.height > 20_000_000:
                     raise ValueError("Screenshot exceeds 20 megapixels")
                 image.load()
                 identifier = uuid.uuid4().hex
-                image.convert("RGB").save(self.images / f"{identifier}.png")
+                ImageOps.exif_transpose(image).convert("RGB").save(
+                    self.images / f"{identifier}.png"
+                )
         except (IndexError, OSError, ValueError) as error:
             raise ValueError("Choose a valid PNG, JPEG or WebP screenshot") from error
         return {"image": identifier}

@@ -8,7 +8,7 @@
         <small>Connected folders</small><strong>{{ roots.length }}</strong>
       </article>
       <article>
-        <small>Indexed files</small><strong>{{ documents.length }}</strong>
+        <small>Indexed files</small><strong>{{ documentCount }}</strong>
       </article>
       <article>
         <small>Saved guides</small><strong>{{ guides.length }}</strong>
@@ -18,7 +18,7 @@
       <div class="panel-head">
         <div>
           <h2>Choose a folder</h2>
-          <p>You control what DeskPilot can organize.</p>
+          <p>You control what DeskHELP can organize.</p>
         </div>
         <button @click="chooseFolder" :disabled="busy">Browse folders</button>
       </div>
@@ -32,7 +32,7 @@
         </button>
       </div>
       <label class="field"
-        >Active folder<select v-model="selectedRoot">
+        >Active folder<select v-model="selectedRoot" @change="folderChanged">
           <option value="">Select a folder</option>
           <option v-for="root in roots" :key="root.id" :value="root.id">
             {{ root.path }}
@@ -40,16 +40,42 @@
         </select></label
       >
       <div class="row">
+        <label
+          >Group files by<select v-model="sortMode" @change="clearPreview">
+            <option value="type">File type</option>
+            <option value="month">Modified month (YYYY-MM)</option>
+          </select></label
+        >
+        <label
+          >Only extension<input
+            v-model="sortExtension"
+            @input="clearPreview"
+            placeholder="Leave blank for all"
+            aria-label="Sorting extension"
+        /></label>
+        <label
+          >Older than (days)<input
+            type="number"
+            min="0"
+            v-model="olderDays"
+            @input="clearPreview"
+        /></label>
+      </div>
+      <div class="row">
         <button @click="previewSort" :disabled="busy">Preview sorting</button
         ><button class="secondary" @click="findDuplicates" :disabled="busy">
           Find exact duplicates</button
         ><button class="secondary" @click="indexFolder" :disabled="busy">
-          Refresh index
+          Refresh index</button
+        ><button class="secondary" @click="disconnectFolder" :disabled="busy">
+          Disconnect folder
         </button>
       </div>
       <p class="hint">
-        Sorting moves top-level files into Documents, Images, Videos, Audio,
-        Archives or Other. It never deletes duplicates.
+        Choose file-type or modified-month groups. Filter by extension and age.
+        Preview first, then select which files to move. Connecting a folder
+        indexes names, metadata and supported text contents locally. Duplicates
+        are never deleted.
       </p>
     </section>
     <section v-if="preview" class="panel">
@@ -61,8 +87,20 @@
         Existing destinations are never overwritten. Undo is available for
         completed moves.
       </p>
+      <div class="row">
+        <button class="secondary" @click="selectAllMoves">
+          Select ready files</button
+        ><button class="secondary" @click="clearMoves">Clear selection</button>
+      </div>
       <div class="file-row" v-for="move in preview.moves" :key="move.source">
-        <div>{{ move.source }}<small>→ {{ move.destination }}</small></div>
+        <label class="check"
+          ><input
+            type="checkbox"
+            v-model="move.selected"
+            :disabled="move.conflict"
+          />
+          {{ move.source }}<small>→ {{ move.destination }}</small></label
+        >
         <span v-if="move.conflict" class="badge warning">Conflict</span
         ><span v-else class="badge">Ready</span>
       </div>
@@ -70,7 +108,7 @@
     </section>
     <section v-if="duplicateGroups.length" class="panel">
       <h2>Identical content</h2>
-      <p>Review these groups yourself. DeskPilot does not delete them.</p>
+      <p>Review these groups yourself. DeskHELP does not delete them.</p>
       <div class="duplicate" v-for="group in duplicateGroups" :key="group[0]">
         <div v-for="path in group" :key="path">{{ path }}</div>
       </div>
@@ -99,6 +137,10 @@
         documents: [],
         guides: [],
         batches: [],
+        documentCount: 0,
+        sortMode: "type",
+        sortExtension: "",
+        olderDays: 0,
         folderPath: "",
         selectedRoot: "",
         preview: null,
@@ -142,6 +184,7 @@
         const state = await this.api("state");
         this.roots = state.roots;
         this.documents = state.documents;
+        this.documentCount = state.document_count;
         this.guides = state.guides;
         this.batches = state.batches;
         if (state.recovery && state.recovery.length)
@@ -164,9 +207,17 @@
         await this.task(async () => {
           const root = await this.api("roots", { path: this.folderPath });
           this.selectedRoot = root.id;
+          this.folderChanged();
           await this.refresh();
           this.message = "Folder connected and indexed.";
         });
+      },
+      clearPreview() {
+        this.preview = null;
+      },
+      folderChanged() {
+        this.preview = null;
+        this.duplicateGroups = [];
       },
       rootPayload() {
         if (!this.selectedRoot)
@@ -175,18 +226,69 @@
       },
       async previewSort() {
         await this.task(async () => {
-          this.preview = await this.api("preview", this.rootPayload());
+          this.preview = await this.api("preview", {
+            ...this.rootPayload(),
+            mode: this.sortMode,
+            extension: this.sortExtension,
+            older_days: Number(this.olderDays) || 0,
+          });
+          this.preview.moves = this.preview.moves.map((move) => ({
+            ...move,
+            selected: !move.conflict,
+          }));
         });
       },
       async applySort() {
         await this.task(async () => {
           if (!this.preview) throw new Error("Preview sorting first");
-          const result = await this.api("apply", { token: this.preview.token });
+          const selected = this.preview.moves
+            .filter((move) => move.selected && !move.conflict)
+            .map((move) => move.source);
+          if (!selected.length)
+            throw new Error("Select at least one ready file");
+          let result;
+          try {
+            result = await this.api("apply", {
+              token: this.preview.token,
+              selected,
+            });
+          } catch (error) {
+            this.preview = null;
+            await this.refresh();
+            throw error;
+          }
           this.preview = null;
           await this.api("index", this.rootPayload());
           await this.refresh();
           this.message =
             result.moved + " files moved. Undo is available below.";
+        });
+      },
+      selectAllMoves() {
+        this.preview.moves.forEach((move) => {
+          move.selected = !move.conflict;
+        });
+      },
+      clearMoves() {
+        this.preview.moves.forEach((move) => {
+          move.selected = false;
+        });
+      },
+      async disconnectFolder() {
+        await this.task(async () => {
+          const payload = this.rootPayload();
+          if (
+            !window.confirm(
+              "Disconnect this folder and remove its library records? Files will remain untouched. Undo history is retained.",
+            )
+          )
+            return;
+          await this.api("disconnect", payload);
+          this.selectedRoot = "";
+          this.preview = null;
+          this.duplicateGroups = [];
+          await this.refresh();
+          this.message = "Folder disconnected. Files were not changed.";
         });
       },
       async undoSort(batch) {
@@ -201,6 +303,7 @@
           const result = await this.api("index", this.rootPayload());
           await this.refresh();
           this.message = result.indexed + " files indexed.";
+          if (result.warnings?.length) this.error = result.warnings.join(" · ");
         });
       },
       async findDuplicates() {
@@ -216,6 +319,15 @@
   };
 </script>
 <style scoped>
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .check input {
+    width: auto;
+  }
   * {
     box-sizing: border-box;
   }

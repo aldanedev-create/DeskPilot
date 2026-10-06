@@ -21,3 +21,18 @@
   reduced-motion and hidden-page suspension keep it controllable.
 - Gate MSIX packaging on frozen WinForms/WebView2 startup and UI mount.
 - Add privacy policy, listing draft and certification instructions.
+
+## 0.2.0 — Workspace improvements
+
+- Image editing: eraser, pen, highlighter, ellipse, solid redaction, colors, sizes,
+  crop, rotate, flip, brightness/contrast/saturation and undo/redo.
+- Save guide keeps active image edits; duplicate steps and protect unkept edits.
+- Library: word/phrase text search, notes, favorites, type/folder/expiry/size
+  filters, sorting, pagination, snippets, original-file opening and refresh.
+- Preserve metadata for missing files and unambiguous external renames; index
+  up to 50,000 files and report skipped/incomplete scans.
+- Organize by modified month or file type, filter age/extension, select moves,
+  skip conflicts and disconnect folders without changing original files.
+- Preflight the complete undo batch, journal interrupted undo, bound preview
+  lifetimes, reject overlapping roots and support exclusive verified copy fallback.
+- Run indexing/file work off the event loop; use SQLite WAL and preserve EXIF orientation.

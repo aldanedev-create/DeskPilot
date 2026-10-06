@@ -1,7 +1,7 @@
 param(
     [string]$IdentityName = "HappyRecorder3D.DeskHELP",
     [string]$Publisher = "CN=50CA2AC2-0155-44AC-B2B0-47100A3FB6E2",
-    [string]$Version = "0.1.0.0"
+    [string]$Version = "0.2.0.0"
 )
 $ErrorActionPreference = "Stop"
 python packaging/create_icons.py
@@ -9,7 +9,8 @@ if ($LASTEXITCODE -ne 0) { throw "Icon generation failed" }
 python -m PyInstaller --clean --noconfirm --noconsole --onedir --name DeskPilot `
     --collect-all flaxon --collect-all teloce --collect-all minifyjs `
     --collect-all webview --collect-all tree_sitter --collect-all tree_sitter_javascript `
-    --collect-all tree_sitter_typescript --collect-all PIL --collect-all reportlab `
+    --collect-all tree_sitter_typescript --collect-all PIL --collect-all reportlab --collect-all pypdf `
+    --add-data "deskpilot/assets;deskpilot/assets" `
     --add-data "deskpilot/ui;deskpilot/ui" run_desktop.py
 if ($LASTEXITCODE -ne 0) { throw "Executable build failed" }
 # Test the frozen WinForms/WebView2 shell, not just source code in Chromium.

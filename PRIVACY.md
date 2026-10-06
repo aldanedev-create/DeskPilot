@@ -9,7 +9,9 @@ connected files, imported images or its database to the publisher.
 ## Information accessed and stored
 
 Only folders you connect are indexed. DeskHELP stores file names, paths, tags,
-expiry dates, sorting history, imported screenshots and screenshot guides.
+expiry dates, favorite flags, notes, file sizes/modification dates, sorting history,
+imported screenshots, screenshot guides and extracted searchable text.
+Text extraction reads supported local text, DOCX and PDF documents during indexing.
 Duplicate comparison reads file contents to calculate hashes. Sorting changes
 file paths only after you review and confirm a preview. Duplicate results do
 not cause automatic deletion. Exports are written where you choose.
@@ -32,10 +34,16 @@ under Microsoft's policies. You control sharing exported PDFs yourself.
 
 Data stays locally until you remove it. To delete app records, close DeskHELP,
 back up anything needed, and delete its data folder. This erases library tags,
-expiry dates, guides, imported images and undo history. It does not undo previous
+expiry dates, notes, favorites, extracted text, guides, imported images and undo history. It does not undo previous
 moves or remove original files or exported PDFs. Back up originals separately.
 Uninstall via Windows Settings → Apps. Do not assume uninstalling removes every
 previous export or locally retained record.
+
+Image annotations and redaction create new images, while originals remain in
+local app data. Erasing an annotation does not erase the screenshot underneath.
+Removing a guide step does not immediately delete its stored original image.
+Delete app data to remove retained originals; redacting a PDF export does not
+redact the original screenshot on your computer.
 
 ## Contact and changes
 

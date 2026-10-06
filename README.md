@@ -10,9 +10,10 @@ and published MinifyJS **0.1.3**. No account or cloud upload is required.
 - **Organize:** connect folders, preview extension-based sorting, refuse overwrites,
   find exact duplicates, and undo completed moves without overwriting edited files.
 - **Library:** index existing files, search names/paths/tags, save tags and expiry dates.
-  Due-date reminders appear in the library when the app is open.
+  Filter folders/types/expiry/favorites/size, search supported document text,
+  edit notes, and page through results. Due-date reminders appear while open.
 - **Guides:** import screenshots, draw boxes/arrows/text, reorder steps, save guides,
-  and export paginated PDFs.
+  crop/rotate/flip, adjust colors, erase annotations, undo/redo and export PDFs.
 - **Desktop:** folder selection, show a document in Explorer, and PDF save dialog.
 
 ## Read the code
@@ -44,7 +45,7 @@ python -m pip install --upgrade pip
 git clone --branch fix/teloce-integration https://github.com/aldanedev-create/flaxon.git vendor/flaxon
 git clone https://github.com/aldanedev-create/teloce-py.git vendor/teloce
 
-python -m pip install minifyjs==0.1.3 pyyaml "tree-sitter>=0.25,<0.27" "tree-sitter-javascript>=0.23,<0.26" "tree-sitter-typescript>=0.23,<0.24" "uvicorn>=0.30,<1" "Pillow>=11,<13" "reportlab>=4,<5" "pywebview>=6,<7" "pytest>=8,<10"
+python -m pip install minifyjs==0.1.3 pyyaml "tree-sitter>=0.25,<0.27" "tree-sitter-javascript>=0.23,<0.26" "tree-sitter-typescript>=0.23,<0.24" "uvicorn>=0.30,<1" "Pillow>=11,<13" "reportlab>=4,<5" "pypdf>=6,<7" "pywebview>=6,<7" "pytest>=8,<10"
 python -m pip install -e vendor/teloce -e vendor/flaxon -e . --no-deps
 python -m deskpilot.launcher --debug
 ```
@@ -116,12 +117,13 @@ original files remain in their own folders and must be backed up separately.
 The app binds only to loopback on a random port and requires a per-launch token
 for API operations. This is a single-user desktop app, not a public server.
 
-Sorting affects top-level files only and stays on the same filesystem. It uses
-hard links to reserve destinations without overwriting; filesystems that do not
-support hard links will reject sorting. Original content is not intentionally
+Sorting affects selected top-level files, grouped by type or modified month,
+with extension and age filters. Destinations are reserved without overwriting,
+using hard links where possible and exclusive verified copies otherwise. Original content is not intentionally
 deleted: moving unlinks its old name after the new link exists. Duplicate
 results are advisory and never deleted automatically. Hidden files and symlinks
-are skipped; folders are limited to 5,000 indexed files.
+are skipped; indexing stops at 50,000 files per folder and reports a warning. Missing records
+retain metadata; disconnecting a folder removes its library records, not files.
 
 ## Current limits
 
@@ -130,8 +132,8 @@ Windows native UI, installed MSIX behavior and the added Chromium test must be
 validated on Windows before publishing. Local validation used editable Flaxon
 and updated Teloce source plus the published MinifyJS 0.1.3 wheel.
 
-Screenshot import and mouse annotation are implemented; OS screen capture,
-touch/pen annotations, OCR, background expiry notifications, encryption,
+Screenshot import and pointer annotations are implemented; OS screen capture,
+OCR, background expiry notifications, encryption,
 automatic filesystem watching and cloud sync are not included. Re-index to see
 external changes. PDF text uses the standard Latin font; complex-script font
 support needs a separate addition. Guide images persist locally, including
@@ -186,3 +188,26 @@ running when the app is closed.
 If the downloaded Windows ZIP reports a Python.Runtime loader error, unblock
 the trusted GitHub ZIP in Properties before extracting it into a new folder.
 Do not disable Windows security.
+
+## DeskHELP 0.2 tools
+
+Image editing uses a separate annotation layer. Eraser removes new annotations,
+not the imported screenshot. Undo/redo, ellipse, freehand pen, highlighter, solid
+redaction, text size/color, crop, rotation, horizontal flip and brightness/contrast/
+saturation are available. Save guide automatically keeps active edits; switching
+images asks before discarding edits. Images are fitted to 4 megapixels for editing,
+with at most 60 undoable actions before keeping. Originals remain in local app
+data even after redaction; exported PNG-in-PDF contains flattened edits.
+
+Library search combines all words, with quoted phrases, across names, paths,
+tags, notes and extracted text. Text extraction handles UTF-8 text, DOCX and
+text-based PDFs (first 30 pages), up to 10 MB and 100,000 characters. It skips
+encrypted/scanned PDFs and unsupported formats. Results paginate at 50 records.
+Refreshing reads connected folders again; external unique file renames preserve
+metadata when the filesystem reports stable identities. Missing files keep their
+records. There is no OCR or background filesystem watcher.
+
+Undo preflights the full batch before moving files. Moves and undo are journaled
+for crash recovery, with ambiguous cases retained for manual review. Copy fallback
+retains the original until copied contents verify. Unexpected mid-batch filesystem
+failures can still leave completed moves in history; these can be undone.

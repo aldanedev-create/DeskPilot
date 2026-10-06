@@ -15,14 +15,16 @@ files, find documents and create screenshot guides on Windows 10 (build 19041)
 or later, on x64 devices. No account or cloud upload is required.
 
 Preview file sorting before moving anything, detect identical files without
-automatic deletion, and undo unchanged moves. Search connected folders by name,
-path or tag and view saved expiry dates while the app is open. Import screenshots,
-annotate steps and export PDF guides. A looping ocean with fish offers a calm
+automatic deletion, and undo unchanged moves. Search connected folders by words or phrases in names,
+paths, tags, notes and supported text, with folder/type/expiry/size/favorite filters.
+Import screenshots, erase annotations, crop/rotate/flip, adjust colors and export PDF guides. A looping ocean with fish offers a calm
 visual accent, with pause and reduced-motion support.
 
-Sorting requires hard-link support and scans at most 5,000 files per folder.
+Sorting supports hard links or verified exclusive copies. Indexing stops at
+50,000 files per folder with a warning.
 DeskHELP does not capture screens, perform OCR, encrypt documents, or provide
-background reminders. PDF text currently supports standard Latin characters.
+background reminders. Text search covers bounded UTF-8, DOCX and text-based PDF
+content; scanned PDFs need OCR. Image editing is capped at 4 megapixels. PDF text currently supports standard Latin characters.
 
 Suggested category: Productivity. Use real screenshots of this release, not
 mockups. Complete the age-rating questionnaire accurately in Partner Center.

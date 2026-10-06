@@ -1,5 +1,6 @@
 """Flaxon endpoints. File operations are available only to this local session."""
 
+import asyncio
 import secrets
 import shutil
 import tempfile
@@ -11,6 +12,7 @@ from flaxon.http import JSONResponse, Response
 
 from .files import FileWorkspace
 from .guides import Guides
+from .library import search_documents, search_text
 from .storage import Store
 
 
@@ -23,6 +25,7 @@ def create_app(data_directory: Path, *, debug=False):
     # Installed package files may be read-only under MSIX. Build in a temporary tree.
     runtime = Path(tempfile.mkdtemp(prefix="deskpilot-ui-"))
     shutil.copytree(Path(__file__).parent / "ui", runtime / "ui")
+    shutil.copytree(Path(__file__).parent / "assets", runtime / "assets")
     app.use_teloce(
         project_root=runtime,
         ui_dir="ui",
@@ -55,9 +58,10 @@ def create_app(data_directory: Path, *, debug=False):
         async def handler(request: Request):
             try:
                 authorize(request)
-                result = function(
-                    request, await request.json() if request.method == "POST" else {}
-                )
+                payload = await request.json() if request.method == "POST" else {}
+                if not isinstance(payload, dict):
+                    raise TypeError("Expected a JSON object")
+                result = await asyncio.to_thread(function, request, payload)
                 return result if isinstance(result, Response) else JSONResponse(result)
             except (ValueError, KeyError, OSError, TypeError) as error:
                 return JSONResponse({"error": str(error)}, status_code=400)
@@ -70,7 +74,12 @@ def create_app(data_directory: Path, *, debug=False):
     def state(request, payload):
         return {
             "roots": store.rows("SELECT * FROM roots ORDER BY id"),
-            "documents": store.rows("SELECT * FROM documents ORDER BY name"),
+            "documents": store.rows(
+                "SELECT id,name,path,tags,expiry FROM documents ORDER BY name LIMIT 100"
+            ),
+            "document_count": store.rows(
+                "SELECT count(*) AS count FROM documents WHERE available=1"
+            )[0]["count"],
             "guides": guides.list(),
             "batches": store.rows(
                 "SELECT batch,COUNT(*) AS count FROM moves WHERE status='moved' GROUP BY batch"
@@ -78,7 +87,7 @@ def create_app(data_directory: Path, *, debug=False):
             "recovery": store.rows(
                 "SELECT source,destination FROM moves WHERE status='review'"
             ),
-            "version": "0.1.0",
+            "version": "0.2.0",
         }
 
     @app.post("/api/roots")
@@ -93,15 +102,30 @@ def create_app(data_directory: Path, *, debug=False):
     def index(request, payload):
         return workspace.index(payload["root"])
 
+    @app.post("/api/disconnect")
+    @endpoint
+    def disconnect(request, payload):
+        return workspace.disconnect(payload["root"])
+
+    @app.post("/api/search")
+    @endpoint
+    def search(request, payload):
+        return search_documents(store, payload)
+
     @app.post("/api/preview")
     @endpoint
     def preview(request, payload):
-        return workspace.preview(payload["root"])
+        return workspace.preview(
+            payload["root"],
+            mode=payload.get("mode", "type"),
+            extension=payload.get("extension", ""),
+            older_days=payload.get("older_days", 0),
+        )
 
     @app.post("/api/apply")
     @endpoint
     def apply(request, payload):
-        return workspace.apply(payload["token"])
+        return workspace.apply(payload["token"], payload.get("selected"))
 
     @app.post("/api/undo")
     @endpoint
@@ -121,11 +145,26 @@ def create_app(data_directory: Path, *, debug=False):
             date.fromisoformat(expiry)
         with store.connect() as connection:
             cursor = connection.execute(
-                "UPDATE documents SET tags=?,expiry=? WHERE id=?",
-                (str(payload.get("tags", ""))[:500], expiry, payload["id"]),
+                "UPDATE documents SET tags=?,expiry=?,favorite=?,notes=? WHERE id=?",
+                (
+                    str(payload.get("tags", ""))[:500],
+                    expiry,
+                    int(bool(payload.get("favorite", False))),
+                    str(payload.get("notes", ""))[:2000],
+                    payload["id"],
+                ),
             )
             if cursor.rowcount != 1:
                 raise ValueError("Document not found")
+            row = dict(
+                connection.execute(
+                    "SELECT * FROM documents WHERE id=?", (payload["id"],)
+                ).fetchone()
+            )
+            connection.execute(
+                "UPDATE documents SET search_text=? WHERE id=?",
+                (search_text(row), row["id"]),
+            )
         return {"saved": True}
 
     @app.post("/api/images")

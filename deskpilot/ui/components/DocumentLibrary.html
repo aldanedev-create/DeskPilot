@@ -3,17 +3,81 @@
     <div v-if="error" class="notice error" role="alert">{{ error }}</div>
     <div v-if="message" class="notice success" role="status">{{ message }}</div>
     <div v-if="busy" class="notice" role="status">Working… Please wait.</div>
-    <div class="row search">
-      <input
-        v-model="search"
-        placeholder="Search filenames, paths or tags"
-        aria-label="Search documents"
-      /><span class="badge">{{ documents.length }} indexed</span>
-    </div>
-    <p class="hint">
-      The library references your existing files. Expiry reminders appear here
-      when you open the app; background notifications are not enabled.
-    </p>
+    <section class="panel filters">
+      <div class="row search">
+        <input
+          v-model="search"
+          @input="queueSearch"
+          @keydown.enter="runSearch"
+          placeholder='Search words or "exact phrases" in names, tags, notes and supported text'
+          aria-label="Search documents"
+        />
+        <button @click="runSearch">Search</button>
+      </div>
+      <div class="row">
+        <label
+          >Folder<select v-model="rootFilter" @change="runSearch">
+            <option value="">All folders</option>
+            <option v-for="root in roots" :key="root.id" :value="root.id">
+              {{ root.path }}
+            </option>
+          </select></label
+        >
+        <label
+          >File type<input
+            v-model="extension"
+            @input="queueSearch"
+            placeholder="pdf, docx, txt…"
+            aria-label="File type filter"
+        /></label>
+        <label
+          >Expiry<select v-model="expiryFilter" @change="runSearch">
+            <option value="">Any date</option>
+            <option value="soon">Due in 30 days</option>
+            <option value="expired">Expired</option>
+          </select></label
+        >
+        <label
+          >Availability<select v-model="statusFilter" @change="runSearch">
+            <option value="available">Available</option>
+            <option value="missing">Missing files</option>
+            <option value="all">All records</option>
+          </select></label
+        >
+        <label
+          >Sort by<select v-model="sortBy" @change="runSearch">
+            <option value="name">Name</option>
+            <option value="recent">Recently modified</option>
+            <option value="size">Largest first</option>
+            <option value="expiry">Expiry date</option>
+          </select></label
+        >
+        <label
+          >Minimum size (MB)<input
+            type="number"
+            min="0"
+            v-model="minimumSize"
+            @input="queueSearch"
+        /></label>
+      </div>
+      <div class="row">
+        <label class="check"
+          ><input type="checkbox" v-model="favoritesOnly" @change="runSearch" />
+          Favorites only</label
+        ><button class="secondary" @click="clearFilters">Clear filters</button
+        ><button class="secondary" @click="refreshIndexes" :disabled="busy">
+          Refresh connected folders</button
+        ><span role="status"
+          >{{ total }} results · Page {{ page }} of {{ pages }}</span
+        >
+      </div>
+      <p class="hint">
+        All search words must match; quote an exact phrase. Text search supports
+        UTF-8 text, DOCX and text-based PDFs (first 30 pages), up to 10 MB and
+        100,000 characters. Scanned PDFs need OCR. Refresh after external
+        changes. Missing-file records keep your tags and notes.
+      </p>
+    </section>
     <section class="panel">
       <div v-if="documents.length === 0" class="empty">
         <h2>Your important files, within reach.</h2>
@@ -21,7 +85,7 @@
       </div>
       <article
         class="document"
-        v-for="document in filteredDocuments()"
+        v-for="document in documents"
         :key="document.id"
       >
         <div class="document-title">
@@ -31,24 +95,55 @@
           >
         </div>
         <p class="path">{{ document.path }}</p>
+        <p>
+          {{ formatSize(document.size) }} · {{ formatDate(document.modified) }}
+          <span v-if="!document.available" class="badge warning">Missing</span>
+        </p>
+        <p v-if="document.snippet" class="snippet">{{ document.snippet }}</p>
         <div class="row">
+          <label class="check"
+            ><input type="checkbox" v-model="document.favorite" />
+            Favorite</label
+          >
           <label
             >Tags<input
               v-model="document.tags"
               placeholder="work, personal, insurance" /></label
           ><label
             >Expiry date<input type="date" v-model="document.expiry" /></label
+          ><label
+            >Notes<input
+              v-model="document.notes"
+              placeholder="Context, reference number…" /></label
           ><button
             class="secondary"
             @click="saveDocument(document)"
             :disabled="busy"
           >
             Save</button
+          ><button
+            class="secondary"
+            @click="openDocument(document.id)"
+            :disabled="!document.available"
+          >
+            Open document</button
           ><button class="secondary" @click="revealDocument(document.id)">
             Show in folder
           </button>
         </div>
       </article>
+      <p v-if="documents.length === 0 && total === 0">
+        No matching documents. Try fewer words, clear filters, or refresh
+        connected folders.
+      </p>
+      <div class="row">
+        <button class="secondary" @click="previousPage" :disabled="page <= 1">
+          Previous page</button
+        ><span>{{ page }} / {{ pages }}</span
+        ><button class="secondary" @click="nextPage" :disabled="page >= pages">
+          Next page
+        </button>
+      </div>
     </section>
   </section>
 </template>
@@ -62,6 +157,16 @@
         guides: [],
         batches: [],
         search: "",
+        rootFilter: "",
+        extension: "",
+        expiryFilter: "",
+        statusFilter: "available",
+        sortBy: "name",
+        minimumSize: 0,
+        favoritesOnly: false,
+        total: 0,
+        page: 1,
+        pages: 1,
         busy: false,
         error: "",
         message: "",
@@ -100,20 +205,93 @@
       async refresh() {
         const state = await this.api("state");
         this.roots = state.roots;
-        this.documents = state.documents;
+        await this.fetchDocuments();
         this.guides = state.guides;
         this.batches = state.batches;
         if (state.recovery && state.recovery.length)
           this.error =
             "An interrupted move needs manual review. Check the source and destination files before sorting again.";
       },
-      filteredDocuments() {
-        const query = this.search.toLowerCase();
-        return this.documents.filter((document) =>
-          (document.name + " " + document.path + " " + document.tags)
-            .toLowerCase()
-            .includes(query),
-        );
+      async fetchDocuments() {
+        const sequence = (this._searchSequence || 0) + 1;
+        this._searchSequence = sequence;
+        try {
+          const result = await this.api("search", {
+            query: this.search,
+            root: this.rootFilter,
+            extension: this.extension,
+            expiry: this.expiryFilter,
+            status: this.statusFilter,
+            sort: this.sortBy,
+            min_size: Math.max(0, Number(this.minimumSize) || 0) * 1024 * 1024,
+            favorite: this.favoritesOnly,
+            page: this.page,
+          });
+          if (sequence !== this._searchSequence) return;
+          this.documents = result.documents;
+          this.total = result.total;
+          this.page = result.page;
+          this.pages = result.pages;
+        } catch (error) {
+          if (sequence === this._searchSequence) this.error = error.message;
+        }
+      },
+      queueSearch() {
+        clearTimeout(this._searchTimer);
+        this._searchTimer = setTimeout(() => this.runSearch(), 250);
+      },
+      async runSearch() {
+        this.page = 1;
+        await this.fetchDocuments();
+      },
+      async previousPage() {
+        if (this.page > 1) {
+          this.page--;
+          await this.fetchDocuments();
+        }
+      },
+      async nextPage() {
+        if (this.page < this.pages) {
+          this.page++;
+          await this.fetchDocuments();
+        }
+      },
+      async clearFilters() {
+        this.search = "";
+        this.rootFilter = "";
+        this.extension = "";
+        this.expiryFilter = "";
+        this.statusFilter = "available";
+        this.sortBy = "name";
+        this.minimumSize = 0;
+        this.favoritesOnly = false;
+        await this.runSearch();
+      },
+      async refreshIndexes() {
+        await this.task(async () => {
+          const warnings = [];
+          for (const root of this.roots) {
+            try {
+              const result = await this.api("index", { root: root.id });
+              warnings.push(...(result.warnings || []));
+            } catch (error) {
+              warnings.push(error.message);
+            }
+          }
+          await this.runSearch();
+          this.message = "Connected folders refreshed.";
+          if (warnings.length) this.error = warnings.join(" · ");
+        });
+      },
+      formatSize(size) {
+        return size >= 1048576
+          ? (size / 1048576).toFixed(1) + " MB"
+          : (size / 1024).toFixed(1) + " KB";
+      },
+      formatDate(value) {
+        return value
+          ? new Date(value * 1000).toLocaleDateString()
+          : "Refresh to see date";
       },
       isDue(expiry) {
         return (
@@ -127,14 +305,42 @@
           this.message = "Document details saved.";
         });
       },
+      async openDocument(id) {
+        await this.task(async () => {
+          if (window.pywebview) await window.pywebview.api.open_document(id);
+          else
+            this.message =
+              "Opening original files is available in the desktop app.";
+        });
+      },
       async revealDocument(id) {
-        if (window.pywebview) await window.pywebview.api.reveal_document(id);
-        else this.message = "Show in folder is available in the desktop app.";
+        await this.task(async () => {
+          if (window.pywebview) await window.pywebview.api.reveal_document(id);
+          else this.message = "Show in folder is available in the desktop app.";
+        });
       },
     },
   };
 </script>
 <style scoped>
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .check input {
+    width: auto;
+  }
+  .filters .row {
+    margin-bottom: 14px;
+  }
+  .snippet {
+    white-space: pre-wrap;
+    background: #f4f7f1;
+    padding: 12px;
+    border-radius: 8px;
+    color: #40533d;
+  }
   * {
     box-sizing: border-box;
   }

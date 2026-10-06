@@ -14,8 +14,9 @@ pytestmark = pytest.mark.skipif(
 
 def test_production_workspace_interactions(tmp_path):
     import uvicorn
+    from playwright.sync_api import expect, sync_playwright
+
     from deskpilot.app import create_app
-    from playwright.sync_api import sync_playwright
 
     folder = tmp_path / "Downloads"
     folder.mkdir()
@@ -64,7 +65,7 @@ def test_production_workspace_interactions(tmp_path):
             assert (folder / "invoice.txt").exists()
             page.get_by_role("button", name="Document library").click()
             page.get_by_label("Search documents").fill("invoice-copy")
-            assert page.locator(".document").count() == 1
+            expect(page.locator(".document")).to_have_count(1)
             page.get_by_role("button", name="Screenshot guides").click()
             page.get_by_label("Guide title").fill("My first guide")
             from PIL import Image
@@ -74,10 +75,60 @@ def test_production_workspace_interactions(tmp_path):
             page.locator("input[type=file]").set_input_files(screenshot)
             page.get_by_label("Step title").wait_for()
             page.get_by_label("Step title").fill("Start here")
+            canvas = page.locator("#annotation-canvas")
+            page.wait_for_function(
+                "document.querySelector('#annotation-canvas').width === 400"
+            )
+
+            def draw(x1, y1, x2, y2):
+                bounds = canvas.bounding_box()
+                width = canvas.evaluate("node => node.width")
+                height = canvas.evaluate("node => node.height")
+                page.mouse.move(
+                    bounds["x"] + x1 * bounds["width"] / width,
+                    bounds["y"] + y1 * bounds["height"] / height,
+                )
+                page.mouse.down()
+                page.mouse.move(
+                    bounds["x"] + x2 * bounds["width"] / width,
+                    bounds["y"] + y2 * bounds["height"] / height,
+                    steps=5,
+                )
+                page.mouse.up()
+
+            def pixel(x, y):
+                return canvas.evaluate(
+                    "(node, p) => Array.from(node.getContext('2d').getImageData(p[0], p[1], 1, 1).data)",
+                    [x, y],
+                )
+
+            original = pixel(80, 40)
+            draw(50, 40, 200, 100)
+            assert pixel(80, 40)[0] > 200
+            page.get_by_role("button", name="Undo edit", exact=True).click()
+            assert pixel(80, 40) == original
+            page.get_by_role("button", name="Redo edit", exact=True).click()
+            assert pixel(80, 40)[0] > 200
+            page.get_by_role("combobox", name="Annotation tool").select_option("eraser")
+            page.get_by_role("spinbutton", name="Stroke / eraser size").fill("20")
+            draw(70, 40, 90, 40)
+            assert pixel(80, 40) == original
+            page.get_by_role("combobox", name="Annotation tool").select_option("crop")
+            draw(10, 10, 310, 160)
+            assert 299 <= canvas.evaluate("node => node.width") <= 301
+            page.get_by_role("button", name="Rotate 90°", exact=True).click()
+            assert 149 <= canvas.evaluate("node => node.width") <= 151
+            # Save automatically persists the active image without Keep annotations.
+
             page.get_by_label("Step description").fill("This is the first step.")
             page.get_by_role("button", name="Save guide", exact=True).click()
             page.get_by_text("Guide saved.").wait_for()
             assert len(app.guides.list()) == 1
+            image_path = app.guides.image_path(
+                app.guides.list()[0]["steps"][0]["image"]
+            )
+            with Image.open(image_path) as saved:
+                assert 149 <= saved.width <= 151 and 299 <= saved.height <= 301
             page.reload()
             page.get_by_role("button", name="Screenshot guides").click()
             page.get_by_role("button", name="My first guide").wait_for()
