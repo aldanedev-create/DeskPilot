@@ -147,7 +147,7 @@ for manual review; DeskPilot never guesses which copy to remove. The
 program refuses symlinks and verifies content but is not designed to defeat
 malicious concurrent filesystem changes by another local process.
 
-## MinifyJS measurement
+## MinifyJS measurement (0.1 baseline)
 
 With identical production settings and asset hashing disabled for comparison,
 the nine emitted JavaScript files totaled **151,008 B** with minification off
@@ -163,7 +163,8 @@ which re-exports the hashed bundle. Development remains unbundled and readable.
 Code splitting is enabled, but the current static component imports emit one
 bundle; this does not make components lazy-loaded automatically.
 
-Comparable local JS measurements (hashing disabled for comparison):
+Historical 0.1 baseline measurements, before the 0.2 editing/search additions
+(hashing disabled for comparison; these are not the new release sizes):
 
 | Mode | JS artifacts measured | JavaScript | Summed gzip |
 | --- | ---: | ---: | ---: |

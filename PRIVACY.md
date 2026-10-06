@@ -16,6 +16,9 @@ Duplicate comparison reads file contents to calculate hashes. Sorting changes
 file paths only after you review and confirm a preview. Duplicate results do
 not cause automatic deletion. Exports are written where you choose.
 
+Technical startup errors may be written to a local startup.log file for
+troubleshooting. This log is not uploaded automatically.
+
 The app keeps metadata, images and guides in a local SQLite database and files
 under `%LOCALAPPDATA%/DeskPilot`, or the folder selected using `--data-dir`.
 Windows may redirect the location for MSIX installations. Original files stay

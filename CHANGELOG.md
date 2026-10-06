@@ -36,3 +36,6 @@
 - Preflight the complete undo batch, journal interrupted undo, bound preview
   lifetimes, reject overlapping roots and support exclusive verified copy fallback.
 - Run indexing/file work off the event loop; use SQLite WAL and preserve EXIF orientation.
+
+- Keep app/window references private in the native JavaScript bridge to prevent
+  recursive object traversal and unintended exposure of backend objects.

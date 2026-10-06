@@ -16,35 +16,35 @@ from .app import create_app
 
 class DesktopActions:
     def __init__(self, app):
-        self.app = app
-        self.window = None
+        self._app = app
+        self._window = None
 
     def choose_folder(self):
         import webview
 
-        selected = self.window.create_file_dialog(webview.FileDialog.FOLDER)
+        selected = self._window.create_file_dialog(webview.FileDialog.FOLDER)
         return selected[0] if selected else None
 
     def reveal_document(self, identifier):
-        rows = self.app.store.rows(
+        rows = self._app.store.rows(
             "SELECT path,root_id FROM documents WHERE id=?", (int(identifier),)
         )
         if not rows:
             raise ValueError("Document not found")
-        root = self.app.workspace.root(rows[0]["root_id"])
-        path = self.app.workspace.safe_file(Path(rows[0]["path"]), root)
+        root = self._app.workspace.root(rows[0]["root_id"])
+        path = self._app.workspace.safe_file(Path(rows[0]["path"]), root)
         if os.name == "nt":
             subprocess.Popen(["explorer.exe", "/select,", str(path)])
         return str(path)
 
     def open_document(self, identifier):
-        rows = self.app.store.rows(
+        rows = self._app.store.rows(
             "SELECT path,root_id FROM documents WHERE id=?", (int(identifier),)
         )
         if not rows:
             raise ValueError("Document not found")
-        root = self.app.workspace.root(rows[0]["root_id"])
-        path = self.app.workspace.safe_file(Path(rows[0]["path"]), root)
+        root = self._app.workspace.root(rows[0]["root_id"])
+        path = self._app.workspace.safe_file(Path(rows[0]["path"]), root)
         if path.suffix.lower() not in {
             ".pdf",
             ".txt",
@@ -65,8 +65,8 @@ class DesktopActions:
     def export_image(self, identifier):
         import webview
 
-        source = self.app.guides.image_path(str(identifier))
-        selected = self.window.create_file_dialog(
+        source = self._app.guides.image_path(str(identifier))
+        selected = self._window.create_file_dialog(
             webview.FileDialog.SAVE,
             save_filename="screenshot.png",
             file_types=("PNG images (*.png)",),
@@ -80,8 +80,8 @@ class DesktopActions:
     def export_guide(self, identifier):
         import webview
 
-        source = self.app.guides.export(int(identifier))
-        selected = self.window.create_file_dialog(
+        source = self._app.guides.export(int(identifier))
+        selected = self._window.create_file_dialog(
             webview.FileDialog.SAVE,
             save_filename=source.name,
             file_types=("PDF files (*.pdf)",),
@@ -162,7 +162,7 @@ def main():
             import webview
 
             actions = DesktopActions(app)
-            actions.window = webview.create_window(
+            actions._window = webview.create_window(
                 "DeskHELP",
                 url,
                 js_api=actions,
@@ -177,13 +177,13 @@ def main():
 
             def check_native_window():
                 try:
-                    if not actions.window.events.loaded.wait(timeout=30):
+                    if not actions._window.events.loaded.wait(timeout=30):
                         raise RuntimeError(
                             "WebView2 page did not load; local HTTP page was verified"
                         )
                     deadline = time.monotonic() + 20
                     while time.monotonic() < deadline:
-                        ready = actions.window.evaluate_js(
+                        ready = actions._window.evaluate_js(
                             "Boolean(document.querySelector('h1') && document.querySelector('.ocean') && document.body.innerText.includes('DeskHELP') && !document.body.innerText.includes('{{'))"
                         )
                         if ready:
@@ -199,7 +199,7 @@ def main():
                     arguments.smoke_result.write_text(
                         json.dumps(smoke), encoding="utf-8"
                     )
-                    actions.window.destroy()
+                    actions._window.destroy()
 
             webview.start(
                 func=check_native_window if arguments.smoke_result else None,
