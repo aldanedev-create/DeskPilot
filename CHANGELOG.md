@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.0 — First Microsoft Store release preparation
+
+- Set the app version to 1.0.0 and MSIX identity version to 1.0.0.0.
+- Keep the fourth MSIX version component at zero for Store submissions.
+
 ## 0.1.0 — first-release candidate
 
 - Added local folder indexing, sorting previews, exact duplicate groups and undo.

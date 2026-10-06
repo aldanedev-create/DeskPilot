@@ -1,7 +1,7 @@
 param(
     [string]$IdentityName = "HappyRecorder3D.DeskHELP",
     [string]$Publisher = "CN=50CA2AC2-0155-44AC-B2B0-47100A3FB6E2",
-    [string]$Version = "0.2.0.0"
+    [string]$Version = "1.0.0.0"
 )
 $ErrorActionPreference = "Stop"
 python packaging/create_icons.py

@@ -63,3 +63,9 @@ Policy references: https://learn.microsoft.com/en-us/windows/apps/publish/store-
 https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/app-capability-declarations
 The published 7.20 policy page is effective October 22, 2026; check the applicable
 version at actual submission. These preparations do not guarantee acceptance.
+
+## Package version
+
+The first Store package uses `1.0.0.0`; the app displays `1.0.0`.
+Keep the first MSIX version component nonzero and the fourth component zero.
+Use higher package versions for updates intended to reach existing customers.

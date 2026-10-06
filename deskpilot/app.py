@@ -87,7 +87,7 @@ def create_app(data_directory: Path, *, debug=False):
             "recovery": store.rows(
                 "SELECT source,destination FROM moves WHERE status='review'"
             ),
-            "version": "0.2.0",
+            "version": "1.0.0",
         }
 
     @app.post("/api/roots")
