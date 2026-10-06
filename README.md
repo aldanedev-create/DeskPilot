@@ -194,7 +194,7 @@ Do not disable Windows security.
 Image editing uses a separate annotation layer. Eraser removes new annotations,
 not the imported screenshot. Undo/redo, ellipse, freehand pen, highlighter, solid
 redaction, text size/color, crop, rotation, horizontal flip and brightness/contrast/
-saturation are available. Save guide automatically keeps active edits; switching
+saturation and PNG export are available. Save guide automatically keeps active edits; switching
 images asks before discarding edits. Images are fitted to 4 megapixels for editing,
 with at most 60 undoable actions before keeping. Originals remain in local app
 data even after redaction; exported PNG-in-PDF contains flattened edits.

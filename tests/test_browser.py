@@ -118,6 +118,12 @@ def test_production_workspace_interactions(tmp_path):
             assert 299 <= canvas.evaluate("node => node.width") <= 301
             page.get_by_role("button", name="Rotate 90°", exact=True).click()
             assert 149 <= canvas.evaluate("node => node.width") <= 151
+            with page.expect_download() as download:
+                page.get_by_role("button", name="Export PNG", exact=True).click()
+            assert download.value.suggested_filename == "screenshot.png"
+            # Add an unkept adjustment so Save guide still tests automatic persistence.
+            page.get_by_role("spinbutton", name="Brightness", exact=True).fill("110")
+            page.get_by_role("button", name="Apply adjustments", exact=True).click()
             # Save automatically persists the active image without Keep annotations.
 
             page.get_by_label("Step description").fill("This is the first step.")

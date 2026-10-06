@@ -25,7 +25,7 @@
 ## 0.2.0 — Workspace improvements
 
 - Image editing: eraser, pen, highlighter, ellipse, solid redaction, colors, sizes,
-  crop, rotate, flip, brightness/contrast/saturation and undo/redo.
+  crop, rotate, flip, brightness/contrast/saturation, PNG export and undo/redo.
 - Save guide keeps active image edits; duplicate steps and protect unkept edits.
 - Library: word/phrase text search, notes, favorites, type/folder/expiry/size
   filters, sorting, pagination, snippets, original-file opening and refresh.

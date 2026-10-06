@@ -72,6 +72,8 @@
             ><button class="secondary" @click="redoImage">Redo edit</button
             ><button class="secondary" @click="resetAnnotation">
               Reset drawing</button
+            ><button class="secondary" @click="exportImage" :disabled="busy">
+              Export PNG</button
             ><button @click="keepAnnotation" :disabled="busy">
               Keep annotations
             </button>
