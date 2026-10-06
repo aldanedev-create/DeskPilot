@@ -6,13 +6,14 @@
     <section class="panel filters">
       <div class="row search">
         <input
+          :disabled="busy"
           v-model="search"
           @input="queueSearch"
           @keydown.enter="runSearch"
           placeholder='Search words or "exact phrases" in names, tags, notes and supported text'
           aria-label="Search documents"
         />
-        <button @click="runSearch">Search</button>
+        <button @click="runSearch" :disabled="busy">Search</button>
       </div>
       <div class="row">
         <label
